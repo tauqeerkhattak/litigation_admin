@@ -1,0 +1,33 @@
+# Firebase Hosting Deploy with Flutter Web Build
+# https://github.com/firebase/firebase-tools
+
+name: Deploy to Firebase Hosting on PR
+on: push
+
+jobs:
+  build_and_preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up Flutter
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # Install dependencies
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      # Build Flutter web
+      - name: Build Flutter Web
+        run: flutter build web --release
+
+      # Deploy to Firebase Hosting
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LITIGATION_APP_5F964 }}
+          projectId: litigation-app-5f964
+          entryPoint: "."

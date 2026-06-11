@@ -30,4 +30,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_LITIGATION_APP_5F964 }}
           projectId: litigation-app-5f964
+          channelId: live
           entryPoint: "."

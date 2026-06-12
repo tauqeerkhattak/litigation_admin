@@ -1,5 +1,8 @@
+import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
 
+import '../controllers/auth_controller.dart';
+import '../controllers/user_controller.dart';
 import '../models/user_model.dart';
 import '../utils/constants.dart';
 import 'user_detail_screen.dart';
@@ -12,57 +15,14 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  // Mock data for UI-only version
-  final List<UserModel> _allUsers = [
-    UserModel(id: '1', name: 'John Doe', email: 'john@example.com'),
-    UserModel(id: '2', name: 'Jane Smith', email: 'jane@example.com'),
-    UserModel(id: '3', name: 'Advocate Malik', email: 'malik@court.com'),
-  ];
-
-  List<UserModel> _filteredUsers = [];
   String _searchQuery = '';
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _filterUsers();
-  }
-
-  void _filterUsers() {
-    setState(() {
-      _filteredUsers = _allUsers.where((user) {
-        return user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ControlRoom.get<UserController>(context).fetchUsers();
     });
-  }
-
-  void _toggleUserStatus(int index) {
-    setState(() {
-      final user = _filteredUsers[index];
-      user.isEnabled = !user.isEnabled;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'User ${_filteredUsers[index].isEnabled ? 'enabled' : 'disabled'} successfully',
-        ),
-        backgroundColor: _filteredUsers[index].isEnabled
-            ? AppColors.green
-            : AppColors.red,
-      ),
-    );
-  }
-
-  void _sendForgotPassword(UserModel user) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Forgot password email sent to ${user.email}'),
-        backgroundColor: AppColors.navy,
-      ),
-    );
   }
 
   void _addNewUser() {
@@ -71,22 +31,54 @@ class _UserListScreenState extends State<UserListScreen> {
       builder: (context) {
         final nameController = TextEditingController();
         final emailController = TextEditingController();
+        final passwordController = TextEditingController();
+        final phoneController = TextEditingController();
+        final roleController = TextEditingController(text: 'viewer');
+
         return AlertDialog(
           title: const Text('Add New User'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: 'viewer',
+                  items: ['admin', 'editor', 'viewer']
+                      .map(
+                        (role) =>
+                            DropdownMenuItem(value: role, child: Text(role)),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) roleController.text = value;
+                  },
+                  decoration: const InputDecoration(labelText: 'Role'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -94,20 +86,41 @@ class _UserListScreenState extends State<UserListScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (nameController.text.isNotEmpty &&
-                    emailController.text.isNotEmpty) {
-                  setState(() {
-                    _allUsers.add(
-                      UserModel(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        name: nameController.text,
-                        email: emailController.text,
-                      ),
-                    );
-                    _filterUsers();
-                  });
+                    emailController.text.isNotEmpty &&
+                    passwordController.text.isNotEmpty) {
+                  final userController = ControlRoom.get<UserController>(
+                    context,
+                  );
                   Navigator.pop(context);
+
+                  await userController.createUser({
+                    'email': emailController.text.trim(),
+                    'password': passwordController.text,
+                    'name': nameController.text.trim(),
+                    'role': roleController.text,
+                    'country_code': '+92',
+                    'phone_number': phoneController.text.trim(),
+                  });
+
+                  if (context.mounted) {
+                    if (userController.state.error != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(userController.state.error!),
+                          backgroundColor: AppColors.red,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('User created successfully'),
+                          backgroundColor: AppColors.green,
+                        ),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Add'),
@@ -120,105 +133,152 @@ class _UserListScreenState extends State<UserListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Manage Users')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search users...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                      ),
+    return StateListener<UserController, UserState>(
+      builder: (context, state) {
+        final filteredUsers = state.users.where((user) {
+          return user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              user.email.toLowerCase().contains(_searchQuery.toLowerCase());
+        }).toList();
+
+        return Scaffold(
+          appBar: AppBar(title: const Text('Manage Users')),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search users...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onChanged: (value) {
-                      _searchQuery = value;
-                      _filterUsers();
-                    },
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
-                Expanded(
-                  child: _filteredUsers.isEmpty
-                      ? const Center(child: Text('No users found.'))
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          itemCount: _filteredUsers.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final user = _filteredUsers[index];
-                            return InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        UserDetailScreen(user: user),
-                                  ),
-                                ).then((_) => setState(() {}));
-                              },
-                              child: Card(
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: AppColors.creamDark,
-                                    child: Text(
-                                      user.name.isNotEmpty ? user.name[0] : '?',
-                                      style: const TextStyle(
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+              ),
+              Expanded(
+                child: state.isLoading && state.users.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : filteredUsers.isEmpty
+                    ? const Center(child: Text('No users found.'))
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: filteredUsers.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final user = filteredUsers[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserDetailScreen(
+                                    user: UserModel(
+                                      id: user.uid,
+                                      name: user.name,
+                                      email: user.email,
+                                      role: user.role,
+                                      isEnabled: !user.disabled,
                                     ),
                                   ),
-                                  title: Text(
-                                    user.name,
+                                ),
+                              ).then(
+                                (_) => ControlRoom.get<UserController>(
+                                  context,
+                                ).fetchUsers(),
+                              );
+                            },
+                            child: Card(
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColors.creamDark,
+                                  child: Text(
+                                    user.name.isNotEmpty ? user.name[0] : '?',
                                     style: const TextStyle(
+                                      color: AppColors.navy,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  subtitle: Text(user.email),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.vpn_key_outlined,
-                                        ),
-                                        onPressed: () =>
-                                            _sendForgotPassword(user),
-                                        tooltip: 'Send Password Reset',
-                                        color: AppColors.muted,
-                                      ),
-                                      Switch(
-                                        value: user.isEnabled,
-                                        onChanged: (value) =>
-                                            _toggleUserStatus(index),
-                                        activeThumbColor: AppColors.green,
-                                      ),
-                                    ],
+                                ),
+                                title: Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                subtitle: Text(user.email),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.vpn_key_outlined),
+                                      onPressed: () async {
+                                        try {
+                                          await ControlRoom.get<AuthController>(
+                                            context,
+                                          ).forgotPassword(user.uid);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Password reset email sent',
+                                                ),
+                                                backgroundColor: AppColors.navy,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Error: $e'),
+                                                backgroundColor: AppColors.red,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      tooltip: 'Send Password Reset',
+                                      color: AppColors.muted,
+                                    ),
+                                    Switch(
+                                      value: !user.disabled,
+                                      onChanged: (value) =>
+                                          ControlRoom.get<UserController>(
+                                            context,
+                                          ).disableUser(user.uid),
+                                      activeThumbColor: AppColors.green,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addNewUser,
-        child: const Icon(Icons.person_add_rounded),
-      ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _addNewUser,
+            child: const Icon(Icons.person_add_rounded),
+          ),
+        );
+      },
     );
   }
 }

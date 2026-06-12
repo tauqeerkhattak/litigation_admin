@@ -1,17 +1,40 @@
+import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
 
+import 'controllers/auth_controller.dart';
+import 'controllers/case_controller.dart';
+import 'controllers/dashboard_controller.dart';
+import 'controllers/user_controller.dart';
 import 'injection.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setupLocator();
-  runApp(const LitigationAdminApp());
+
+  final authService = getIt<AuthService>();
+  final isLoggedIn = await authService.loadSession();
+
+  runApp(
+    ControlRoom(
+      controllers: {
+        AuthController: () => getIt<AuthController>(),
+        DashboardController: () => getIt<DashboardController>(),
+        UserController: () => getIt<UserController>(),
+        CaseController: () => getIt<CaseController>(),
+      },
+      child: LitigationAdminApp(isLoggedIn: isLoggedIn),
+    ),
+  );
 }
 
 class LitigationAdminApp extends StatelessWidget {
-  const LitigationAdminApp({super.key});
+  final bool isLoggedIn;
+
+  const LitigationAdminApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +42,7 @@ class LitigationAdminApp extends StatelessWidget {
       title: 'Litigation Admin',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
-      home: const LoginScreen(),
+      home: isLoggedIn ? const DashboardScreen() : const LoginScreen(),
     );
   }
 }

@@ -1,8 +1,8 @@
+import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../injection.dart';
-import '../services/auth_service.dart';
+import '../controllers/auth_controller.dart';
 import '../utils/constants.dart';
 import 'dashboard_screen.dart';
 
@@ -22,52 +22,32 @@ class _LoginScreenState extends State<LoginScreen> {
   );
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
-  bool _isLoading = false;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      final authController = ControlRoom.get<AuthController>(context);
+      final response = await authController.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-      try {
-        final authService = getIt<AuthService>();
-        final response = await authService.login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-
-        if (mounted) {
-          if (response.status == 'success') {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(response.message)));
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const DashboardScreen()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(response.message),
-                backgroundColor: AppColors.red,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
+      if (mounted) {
+        if (response != null &&
+            (response.status == 'success' || response.status == '200')) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(response.message)));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        } else {
+          final error = ControlRoom.get<AuthController>(context).state.error;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${e.toString()}'),
+              content: Text(error ?? 'Login failed'),
               backgroundColor: AppColors.red,
             ),
           );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
         }
       }
     }
@@ -178,17 +158,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                         const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _login,
-                            child: _isLoading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  )
-                                : const Text('SIGN IN'),
-                          ),
+                        StateListener<AuthController, AuthState>(
+                          builder: (context, state) {
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: state.isLoading ? null : _login,
+                                child: state.isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : const Text('SIGN IN'),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
                         TextButton(

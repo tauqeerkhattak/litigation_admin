@@ -3,6 +3,7 @@ import 'package:retrofit/retrofit.dart';
 
 import 'models/login_request.dart';
 import 'models/login_response.dart';
+import 'models/generic_response.dart';
 
 part 'auth_api.g.dart';
 
@@ -14,4 +15,7 @@ abstract class AuthApi {
 
   @POST("admin/login")
   Future<LoginResponse> login(@Body() LoginRequest request);
+
+  @POST("users/{uid}/forgot-password")
+  Future<GenericResponse> forgotPassword(@Path("uid") String uid);
 }

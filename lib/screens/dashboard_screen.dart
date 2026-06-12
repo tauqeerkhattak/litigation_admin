@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:control_room/control_room.dart';
+
+import '../controllers/dashboard_controller.dart';
+import '../controllers/auth_controller.dart';
 import '../utils/constants.dart';
 import 'calendar_screen.dart';
 import 'case_list_screen.dart';
@@ -13,220 +17,219 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _activeCasesCount = 12;
-  int _hearingsTodayCount = 3;
-  int _totalUsersCount = 8;
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
-    // In a UI-only version, we just use static values or mock data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ControlRoom.get<DashboardController>(context).fetchDashboardData();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Litigation Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Refreshing... (UI Only)')),
-              );
-            },
-            tooltip: 'Refresh Data',
+    return StateListener<DashboardController, DashboardState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Litigation Dashboard'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ControlRoom.get<DashboardController>(context).fetchDashboardData(),
+                tooltip: 'Refresh Data',
+              ),
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {},
+              ),
+              IconButton(icon: const Icon(Icons.person_outline), onPressed: () {}),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          IconButton(icon: const Icon(Icons.person_outline), onPressed: () {}),
-        ],
-      ),
-      drawer: _buildDrawer(context),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 900;
-                final isMedium = constraints.maxWidth > 600;
+          drawer: _buildDrawer(context),
+          body: state.isLoading && state.data == null
+              ? const Center(child: CircularProgressIndicator())
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 900;
+                    final isMedium = constraints.maxWidth > 600;
 
-                return SingleChildScrollView(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Overview',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.navy,
-                                  ),
-                            ),
-                            const SizedBox(height: 16),
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: 4,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: isWide
-                                        ? 4
-                                        : (isMedium ? 2 : 2),
-                                    crossAxisSpacing: 16,
-                                    mainAxisSpacing: 16,
-                                    childAspectRatio: isWide ? 1.3 : 1.5,
-                                  ),
-                              itemBuilder: (context, index) {
-                                switch (index) {
-                                  case 0:
-                                    return _buildStatCard(
-                                      'Active Cases',
-                                      '$_activeCasesCount',
-                                      Icons.gavel,
-                                      AppColors.navy,
-                                    );
-                                  case 1:
-                                    return _buildStatCard(
-                                      'Hearings Today',
-                                      '$_hearingsTodayCount',
-                                      Icons.calendar_today,
-                                      AppColors.gold,
-                                    );
-                                  case 2:
-                                    return _buildStatCard(
-                                      'Total Users',
-                                      '$_totalUsersCount',
-                                      Icons.people,
-                                      AppColors.green,
-                                    );
-                                  case 3:
-                                    return _buildStatCard(
-                                      'Urgent Tasks',
-                                      '2',
-                                      Icons.warning_amber,
-                                      AppColors.red,
-                                    );
-                                  default:
-                                    return const SizedBox.shrink();
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 32),
-                            Text(
-                              'Quick Actions',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.navy,
-                                  ),
-                            ),
-                            const SizedBox(height: 16),
-                            isWide
-                                ? Row(
-                                    children: [
-                                      Expanded(
-                                        child: _buildActionTile(
-                                          context,
-                                          'View All Cases',
-                                          Icons.list_alt,
-                                          () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const CaseListScreen(),
+                    final data = state.data;
+
+                    return SingleChildScrollView(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1200),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Overview',
+                                  style: Theme.of(context).textTheme.headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.navy,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: 4,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: isWide
+                                            ? 4
+                                            : (isMedium ? 2 : 2),
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                        childAspectRatio: isWide ? 1.3 : 1.5,
+                                      ),
+                                  itemBuilder: (context, index) {
+                                    switch (index) {
+                                      case 0:
+                                        return _buildStatCard(
+                                          'Active Cases',
+                                          '${data?.activeCases ?? 0}',
+                                          Icons.gavel,
+                                          AppColors.navy,
+                                        );
+                                      case 1:
+                                        return _buildStatCard(
+                                          'Hearings Today',
+                                          '${data?.hearingsToday ?? 0}',
+                                          Icons.calendar_today,
+                                          AppColors.gold,
+                                        );
+                                      case 2:
+                                        return _buildStatCard(
+                                          'Total Users',
+                                          '${data?.totalUsers ?? 0}',
+                                          Icons.people,
+                                          AppColors.green,
+                                        );
+                                      case 3:
+                                        return _buildStatCard(
+                                          'Urgent Tasks',
+                                          '${data?.urgentTasks ?? 0}',
+                                          Icons.warning_amber,
+                                          AppColors.red,
+                                        );
+                                      default:
+                                        return const SizedBox.shrink();
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 32),
+                                Text(
+                                  'Quick Actions',
+                                  style: Theme.of(context).textTheme.headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.navy,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                isWide
+                                    ? Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildActionTile(
+                                              context,
+                                              'View All Cases',
+                                              Icons.list_alt,
+                                              () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const CaseListScreen(),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: _buildActionTile(
-                                          context,
-                                          'Court Calendar',
-                                          Icons.calendar_month,
-                                          () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const CalendarScreen(),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: _buildActionTile(
+                                              context,
+                                              'Court Calendar',
+                                              Icons.calendar_month,
+                                              () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const CalendarScreen(),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: _buildActionTile(
-                                          context,
-                                          'Manage Users',
-                                          Icons.manage_accounts,
-                                          () => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const UserListScreen(),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: _buildActionTile(
+                                              context,
+                                              'Manage Users',
+                                              Icons.manage_accounts,
+                                              () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const UserListScreen(),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Column(
-                                    children: [
-                                      _buildActionTile(
-                                        context,
-                                        'View All Cases',
-                                        Icons.list_alt,
-                                        () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const CaseListScreen(),
+                                        ],
+                                      )
+                                    : Column(
+                                        children: [
+                                          _buildActionTile(
+                                            context,
+                                            'View All Cases',
+                                            Icons.list_alt,
+                                            () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const CaseListScreen(),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      _buildActionTile(
-                                        context,
-                                        'Court Calendar',
-                                        Icons.calendar_month,
-                                        () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const CalendarScreen(),
+                                          _buildActionTile(
+                                            context,
+                                            'Court Calendar',
+                                            Icons.calendar_month,
+                                            () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const CalendarScreen(),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      _buildActionTile(
-                                        context,
-                                        'Manage Users',
-                                        Icons.manage_accounts,
-                                        () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const UserListScreen(),
+                                          _buildActionTile(
+                                            context,
+                                            'Manage Users',
+                                            Icons.manage_accounts,
+                                            () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const UserListScreen(),
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                          ],
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
+        );
+      },
     );
   }
 
@@ -322,7 +325,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   'admin@litigation.com',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -371,11 +374,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            onTap: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
+            onTap: () async {
+              await ControlRoom.get<AuthController>(context).logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
           ),
         ],

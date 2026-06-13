@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/user_controller.dart';
-import '../models/user_model.dart';
 import '../utils/constants.dart';
+import '../utils/string_utils.dart';
 import 'user_detail_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -16,6 +16,11 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen> {
   String _searchQuery = '';
+  final _userRoleNotifier = ValueNotifier<UserRole?>(null);
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final phoneController = TextEditingController();
 
   @override
   void initState() {
@@ -29,12 +34,6 @@ class _UserListScreenState extends State<UserListScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        final nameController = TextEditingController();
-        final emailController = TextEditingController();
-        final passwordController = TextEditingController();
-        final phoneController = TextEditingController();
-        final roleController = TextEditingController(text: 'viewer');
-
         return AlertDialog(
           title: const Text('Add New User'),
           content: SingleChildScrollView(
@@ -64,16 +63,17 @@ class _UserListScreenState extends State<UserListScreen> {
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: 'viewer',
-                  items: ['admin', 'editor', 'viewer']
+                DropdownButtonFormField<UserRole>(
+                  items: UserRole.values
                       .map(
-                        (role) =>
-                            DropdownMenuItem(value: role, child: Text(role)),
+                        (role) => DropdownMenuItem(
+                          value: role,
+                          child: Text(role.name.capitalize),
+                        ),
                       )
                       .toList(),
                   onChanged: (value) {
-                    if (value != null) roleController.text = value;
+                    _userRoleNotifier.value = value;
                   },
                   decoration: const InputDecoration(labelText: 'Role'),
                 ),
@@ -99,7 +99,7 @@ class _UserListScreenState extends State<UserListScreen> {
                     'email': emailController.text.trim(),
                     'password': passwordController.text,
                     'name': nameController.text.trim(),
-                    'role': roleController.text,
+                    'role': _userRoleNotifier.value,
                     'country_code': '+92',
                     'phone_number': phoneController.text.trim(),
                   });
@@ -129,6 +129,16 @@ class _UserListScreenState extends State<UserListScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _userRoleNotifier.dispose();
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -182,20 +192,9 @@ class _UserListScreenState extends State<UserListScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => UserDetailScreen(
-                                    user: UserModel(
-                                      id: user.uid,
-                                      name: user.name,
-                                      email: user.email,
-                                      role: user.role,
-                                      isEnabled: !user.disabled,
-                                    ),
-                                  ),
+                                  builder: (context) =>
+                                      UserDetailScreen(user: user),
                                 ),
-                              ).then(
-                                (_) => ControlRoom.get<UserController>(
-                                  context,
-                                ).fetchUsers(),
                               );
                             },
                             child: Card(

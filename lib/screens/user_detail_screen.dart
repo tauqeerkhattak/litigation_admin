@@ -1,6 +1,8 @@
+import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
 
-import '../models/user_model.dart';
+import '../api/models/user_response.dart';
+import '../controllers/user_controller.dart';
 import '../utils/constants.dart';
 
 class UserDetailScreen extends StatefulWidget {
@@ -13,20 +15,24 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late String _role;
-  late String _status;
+  late UserRole _role;
   late bool _isEnabled;
+  bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
+    _initFields();
+  }
+
+  void _initFields() {
     _nameController = TextEditingController(text: widget.user.name);
     _emailController = TextEditingController(text: widget.user.email);
     _role = widget.user.role;
-    _status = widget.user.status;
-    _isEnabled = widget.user.isEnabled;
+    _isEnabled = !widget.user.disabled;
   }
 
   @override
@@ -34,22 +40,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
-  }
-
-  void _saveUser() {
-    // In UI-only version, we just update the local object (which might not persist across screens if not passed back)
-    widget.user.name = _nameController.text;
-    widget.user.email = _emailController.text;
-    widget.user.role = _role;
-    widget.user.status = _status;
-    widget.user.isEnabled = _isEnabled;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('User profile updated successfully (UI Only)'),
-      ),
-    );
-    Navigator.pop(context);
   }
 
   void _resetPassword() {
@@ -61,144 +51,247 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
+  void _toggleUserStatus() async {
+    try {
+      await ControlRoom.get<UserController>(
+        context,
+      ).disableUser(widget.user.uid);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'User ${_isEnabled ? 'disabled' : 'enabled'} successfully',
+            ),
+          ),
+        );
+        setState(() {
+          _isEnabled = !_isEnabled;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Action failed: $e')));
+      }
+    }
+  }
+
+  void _saveUser() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final userData = {
+      'name': _nameController.text,
+      'email': _emailController.text,
+      'role': _role.name,
+      'disabled': !_isEnabled,
+    };
+
+    try {
+      await ControlRoom.get<UserController>(
+        context,
+      ).updateUser(widget.user.uid, userData);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User updated successfully')),
+        );
+        setState(() {
+          _isEditing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update user: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        actions: [
-          IconButton(icon: const Icon(Icons.check), onPressed: _saveUser),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.creamDark,
-                    child: Text(
-                      widget.user.name.isNotEmpty ? widget.user.name[0] : '?',
-                      style: const TextStyle(
-                        fontSize: 40,
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.bold,
+    return StateListener<UserController, UserState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('User Profile'),
+            actions: [
+              if (!_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => setState(() => _isEditing = true),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      _isEditing = false;
+                      _initFields();
+                    });
+                  },
+                ),
+            ],
+          ),
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: AppColors.creamDark,
+                            child: Text(
+                              widget.user.name.isNotEmpty
+                                  ? widget.user.name[0]
+                                  : '?',
+                              style: const TextStyle(
+                                fontSize: 40,
+                                color: AppColors.navy,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (_isEditing)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: AppColors.gold,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.camera_alt,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {},
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.gold,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.camera_alt,
-                          size: 18,
-                          color: Colors.white,
+                    const SizedBox(height: 24),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            enabled: _isEditing,
+                            decoration: const InputDecoration(
+                              labelText: 'Full Name',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.person),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _emailController,
+                            enabled: _isEditing,
+                            decoration: const InputDecoration(
+                              labelText: 'Email Address',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.email),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter an email';
+                              }
+                              if (!RegExp(
+                                r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                              ).hasMatch(value)) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<UserRole>(
+                            value: _role,
+                            onChanged: _isEditing
+                                ? (value) {
+                                    if (value != null) {
+                                      setState(() => _role = value);
+                                    }
+                                  }
+                                : null,
+                            decoration: const InputDecoration(
+                              labelText: 'Role',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.badge),
+                            ),
+                            items: UserRole.values
+                                .map(
+                                  (role) => DropdownMenuItem(
+                                    value: role,
+                                    child: Text(
+                                      role.name[0].toUpperCase() +
+                                          role.name.substring(1),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_isEditing)
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _resetPassword,
+                          icon: const Icon(Icons.lock_reset),
+                          label: const Text('Reset Password'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.red,
+                            side: const BorderSide(color: AppColors.red),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                         ),
-                        onPressed: () {},
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email Address',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _role,
-              decoration: const InputDecoration(
-                labelText: 'Role',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.badge),
-              ),
-              items: ['Admin', 'Lawyer', 'Paralegal', 'Client']
-                  .map(
-                    (role) => DropdownMenuItem(value: role, child: Text(role)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) setState(() => _role = value);
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _status,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.info_outline),
-              ),
-              items: ['Active', 'Inactive', 'Suspended']
-                  .map(
-                    (status) =>
-                        DropdownMenuItem(value: status, child: Text(status)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) setState(() => _status = value);
-              },
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Account Enabled'),
-              subtitle: const Text('Toggle to enable or disable user access'),
-              value: _isEnabled,
-              onChanged: (value) {
-                setState(() => _isEnabled = value);
-              },
-              activeColor: AppColors.green,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _resetPassword,
-                icon: const Icon(Icons.lock_reset),
-                label: const Text('Reset Password'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.red,
-                  side: const BorderSide(color: AppColors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                    const SizedBox(height: 32),
+                    if (_isEditing)
+                      ElevatedButton(
+                        onPressed: state.isLoading ? null : _saveUser,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.navy,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: state.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Save Changes'),
+                      ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveUser,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navy,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Save Changes'),
-            ),
-          ],
-        ),
-      ),
+              if (state.isLoading && !_isEditing)
+                const Center(child: CircularProgressIndicator()),
+            ],
+          ),
+        );
+      },
     );
   }
 }

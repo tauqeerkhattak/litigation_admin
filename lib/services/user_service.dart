@@ -1,5 +1,5 @@
-import '../api/user_api.dart';
 import '../api/models/user_response.dart';
+import '../api/user_api.dart';
 
 class UserService {
   final UserApi _userApi;
@@ -17,6 +17,17 @@ class UserService {
   Future<UserSingleResponse> createUser(Map<String, dynamic> userData) async {
     try {
       return await _userApi.createUser(userData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<UserSingleResponse> updateUser(
+    String uid,
+    Map<String, dynamic> userData,
+  ) async {
+    try {
+      return await _userApi.updateUser(uid, userData);
     } catch (e) {
       rethrow;
     }

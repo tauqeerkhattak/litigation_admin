@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../controllers/case_controller.dart';
-import '../models/case_model.dart';
 import '../utils/constants.dart';
 import 'case_detail_screen.dart';
 
@@ -35,7 +34,7 @@ class _CaseListScreenState extends State<CaseListScreen> {
               caseItem.title.toLowerCase().contains(
                 _searchQuery.toLowerCase(),
               ) ||
-              caseItem.caseNo.toLowerCase().contains(
+              (caseItem.caseNo?.toLowerCase() ?? '').contains(
                 _searchQuery.toLowerCase(),
               ) ||
               caseItem.plaintiffs.any(
@@ -118,23 +117,8 @@ class _CaseListScreenState extends State<CaseListScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => CaseDetailScreen(
-                                    caseData: CaseData(
-                                      id: caseItem.id,
-                                      title: caseItem.title,
-                                      caseNumber: caseItem.caseNo,
-                                      clientName: caseItem.plaintiffs.isNotEmpty
-                                          ? caseItem.plaintiffs.first
-                                          : 'N/A',
-                                      hearingDate: caseItem.nextHearing != null
-                                          ? DateTime.parse(
-                                              caseItem.nextHearing!,
-                                            )
-                                          : DateTime.now(),
-                                      status: caseItem.status,
-                                      description: caseItem.notes,
-                                    ),
-                                  ),
+                                  builder: (context) =>
+                                      CaseDetailScreen(caseData: caseItem),
                                 ),
                               ).then(
                                 (_) => ControlRoom.get<CaseController>(

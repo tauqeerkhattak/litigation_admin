@@ -6,16 +6,12 @@ import '../services/user_service.dart';
 
 class UserState {
   final bool isLoading;
-  final List<UserDataResponse> users;
+  final List<UserModel> users;
   final String? error;
 
   UserState({this.isLoading = false, this.users = const [], this.error});
 
-  UserState copyWith({
-    bool? isLoading,
-    List<UserDataResponse>? users,
-    String? error,
-  }) {
+  UserState copyWith({bool? isLoading, List<UserModel>? users, String? error}) {
     return UserState(
       isLoading: isLoading ?? this.isLoading,
       users: users ?? this.users,
@@ -42,6 +38,16 @@ class UserController extends StateController<UserState> {
     update(state.copyWith(isLoading: true));
     try {
       await getIt<UserService>().createUser(userData);
+      await fetchUsers();
+    } catch (e) {
+      update(state.copyWith(isLoading: false, error: e.toString()));
+    }
+  }
+
+  Future<void> updateUser(String uid, Map<String, dynamic> userData) async {
+    update(state.copyWith(isLoading: true));
+    try {
+      await getIt<UserService>().updateUser(uid, userData);
       await fetchUsers();
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));

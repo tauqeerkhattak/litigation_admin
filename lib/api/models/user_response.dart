@@ -1,20 +1,21 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:litigation_admin/utils/constants.dart';
 
 part 'user_response.g.dart';
 
 @JsonSerializable()
-class UserDataResponse {
+class UserModel {
   final String uid;
   final String email;
   final String name;
   final String countryCode;
   final String phoneNumber;
-  final String role;
+  final UserRole role;
   final bool disabled;
   final String createdAt;
   final String updatedAt;
 
-  UserDataResponse({
+  UserModel({
     required this.uid,
     required this.email,
     required this.name,
@@ -26,14 +27,14 @@ class UserDataResponse {
     required this.updatedAt,
   });
 
-  factory UserDataResponse.fromJson(Map<String, dynamic> json) =>
-      _$UserDataResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$UserDataResponseToJson(this);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
+  Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }
 
 @JsonSerializable()
 class UserListResponse {
-  final List<UserDataResponse> data;
+  final List<UserModel> data;
   final String message;
   final int status;
 
@@ -50,7 +51,7 @@ class UserListResponse {
 
 @JsonSerializable()
 class UserSingleResponse {
-  final UserDataResponse data;
+  final UserModel data;
   final String message;
   final int status;
 

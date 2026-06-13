@@ -15,3 +15,10 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFD4C9B0);
 }
+
+enum UserRole {
+  editor, // Can create cases, hearings, and add documents
+  commentor, // Cannot create cases, can create hearings and add documents
+  documentor, // Cannot create cases and hearings, can only add documents
+  viewer, // Only view cases, hearings, and documents
+}

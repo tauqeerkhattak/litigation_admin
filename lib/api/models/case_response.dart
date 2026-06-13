@@ -6,16 +6,16 @@ part 'case_response.g.dart';
 class CaseDocument {
   final String id;
   final String type;
-  final String name;
-  final String url;
-  final String uploadedAt;
+  final String? name;
+  final String? url;
+  final String? uploadedAt;
 
   CaseDocument({
     required this.id,
     required this.type,
-    required this.name,
-    required this.url,
-    required this.uploadedAt,
+    this.name,
+    this.url,
+    this.uploadedAt,
   });
 
   factory CaseDocument.fromJson(Map<String, dynamic> json) =>
@@ -25,15 +25,13 @@ class CaseDocument {
 
 @JsonSerializable()
 class CaseHearing {
-  final String id;
-  @JsonKey(name: 'case_id')
-  final String caseId;
-  final String date;
+  final String? id;
+  final String? caseId;
+  final String? date;
   final String submitted;
   final String happened;
   final String order;
-  @JsonKey(name: 'next_date')
-  final String nextDate;
+  final String? nextDate;
 
   CaseHearing({
     required this.id,
@@ -42,7 +40,7 @@ class CaseHearing {
     required this.submitted,
     required this.happened,
     required this.order,
-    required this.nextDate,
+    this.nextDate,
   });
 
   factory CaseHearing.fromJson(Map<String, dynamic> json) =>
@@ -52,12 +50,12 @@ class CaseHearing {
 
 @JsonSerializable()
 class CaseDataResponse {
-  final String id;
-  final String userId;
-  final String caseNo;
-  final int year;
-  final String court;
-  final String bench;
+  final String? id;
+  final String? userId;
+  final String? caseNo;
+  final int? year;
+  final String? court;
+  final String? bench;
   final String title;
   final List<String> plaintiffs;
   final List<String> respondents;
@@ -72,13 +70,62 @@ class CaseDataResponse {
   final List<CaseDocument> documents;
   final List<CaseHearing> hearings;
 
+  String get clientName => plaintiffs.isNotEmpty ? plaintiffs.first : 'N/A';
+
+  DateTime get nextHearingDate =>
+      nextHearing != null ? DateTime.parse(nextHearing!) : DateTime.now();
+
+  CaseDataResponse copyWith({
+    String? id,
+    String? userId,
+    String? caseNo,
+    int? year,
+    String? court,
+    String? bench,
+    String? title,
+    List<String>? plaintiffs,
+    List<String>? respondents,
+    String? firstHearing,
+    String? lastHearing,
+    String? nextHearing,
+    String? status,
+    String? notes,
+    String? caseNature,
+    String? department,
+    String? taluka,
+    List<CaseDocument>? documents,
+    List<CaseHearing>? hearings,
+  }) {
+    return CaseDataResponse(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      caseNo: caseNo ?? this.caseNo,
+      year: year ?? this.year,
+      court: court ?? this.court,
+      bench: bench ?? this.bench,
+      title: title ?? this.title,
+      plaintiffs: plaintiffs ?? this.plaintiffs,
+      respondents: respondents ?? this.respondents,
+      firstHearing: firstHearing ?? this.firstHearing,
+      lastHearing: lastHearing ?? this.lastHearing,
+      nextHearing: nextHearing ?? this.nextHearing,
+      status: status ?? this.status,
+      notes: notes ?? this.notes,
+      caseNature: caseNature ?? this.caseNature,
+      department: department ?? this.department,
+      taluka: taluka ?? this.taluka,
+      documents: documents ?? this.documents,
+      hearings: hearings ?? this.hearings,
+    );
+  }
+
   CaseDataResponse({
-    required this.id,
-    required this.userId,
-    required this.caseNo,
-    required this.year,
-    required this.court,
-    required this.bench,
+    this.id,
+    this.userId,
+    this.caseNo,
+    this.year,
+    this.court,
+    this.bench,
     required this.title,
     required this.plaintiffs,
     required this.respondents,

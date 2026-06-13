@@ -15,6 +15,12 @@ abstract class UserApi {
   @POST("/admin/users/create")
   Future<UserSingleResponse> createUser(@Body() Map<String, dynamic> request);
 
+  @PUT("/admin/users/{uid}")
+  Future<UserSingleResponse> updateUser(
+    @Path("uid") String uid,
+    @Body() Map<String, dynamic> request,
+  );
+
   @DELETE("/admin/users/{uid}")
   Future<UserSingleResponse> disableUser(@Path("uid") String uid);
 }

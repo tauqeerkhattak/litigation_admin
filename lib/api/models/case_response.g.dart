@@ -9,9 +9,9 @@ part of 'case_response.dart';
 CaseDocument _$CaseDocumentFromJson(Map<String, dynamic> json) => CaseDocument(
   id: json['id'] as String,
   type: json['type'] as String,
-  name: json['name'] as String,
-  url: json['url'] as String,
-  uploadedAt: json['uploaded_at'] as String,
+  name: json['name'] as String?,
+  url: json['url'] as String?,
+  uploadedAt: json['uploaded_at'] as String?,
 );
 
 Map<String, dynamic> _$CaseDocumentToJson(CaseDocument instance) =>
@@ -24,13 +24,13 @@ Map<String, dynamic> _$CaseDocumentToJson(CaseDocument instance) =>
     };
 
 CaseHearing _$CaseHearingFromJson(Map<String, dynamic> json) => CaseHearing(
-  id: json['id'] as String,
-  caseId: json['case_id'] as String,
-  date: json['date'] as String,
+  id: json['id'] as String?,
+  caseId: json['case_id'] as String?,
+  date: json['date'] as String?,
   submitted: json['submitted'] as String,
   happened: json['happened'] as String,
   order: json['order'] as String,
-  nextDate: json['next_date'] as String,
+  nextDate: json['next_date'] as String?,
 );
 
 Map<String, dynamic> _$CaseHearingToJson(CaseHearing instance) =>
@@ -46,12 +46,12 @@ Map<String, dynamic> _$CaseHearingToJson(CaseHearing instance) =>
 
 CaseDataResponse _$CaseDataResponseFromJson(Map<String, dynamic> json) =>
     CaseDataResponse(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      caseNo: json['case_no'] as String,
-      year: (json['year'] as num).toInt(),
-      court: json['court'] as String,
-      bench: json['bench'] as String,
+      id: json['id'] as String?,
+      userId: json['user_id'] as String?,
+      caseNo: json['case_no'] as String?,
+      year: (json['year'] as num?)?.toInt(),
+      court: json['court'] as String?,
+      bench: json['bench'] as String?,
       title: json['title'] as String,
       plaintiffs: (json['plaintiffs'] as List<dynamic>)
           .map((e) => e as String)

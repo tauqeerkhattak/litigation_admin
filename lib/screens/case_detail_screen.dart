@@ -1,11 +1,12 @@
+import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-import '../models/case_model.dart';
+import '../api/models/case_response.dart';
+import '../controllers/case_controller.dart';
 import '../utils/constants.dart';
 
 class CaseDetailScreen extends StatefulWidget {
-  final CaseData caseData;
+  final CaseDataResponse caseData;
 
   const CaseDetailScreen({super.key, required this.caseData});
 
@@ -14,6 +15,7 @@ class CaseDetailScreen extends StatefulWidget {
 }
 
 class _CaseDetailScreenState extends State<CaseDetailScreen> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _clientController;
   late TextEditingController _descriptionController;
@@ -23,13 +25,15 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _initFields();
+  }
+
+  void _initFields() {
     _titleController = TextEditingController(text: widget.caseData.title);
     _clientController = TextEditingController(text: widget.caseData.clientName);
-    _descriptionController = TextEditingController(
-      text: widget.caseData.description,
-    );
+    _descriptionController = TextEditingController(text: widget.caseData.notes);
     _status = widget.caseData.status;
-    _hearingDate = widget.caseData.hearingDate;
+    _hearingDate = widget.caseData.nextHearingDate;
   }
 
   @override
@@ -54,120 +58,87 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
     }
   }
 
-  void _saveCase() {
-    // In UI-only version, we update the local object
-    widget.caseData.title = _titleController.text;
-    widget.caseData.clientName = _clientController.text;
-    widget.caseData.hearingDate = _hearingDate;
-    widget.caseData.status = _status;
-    widget.caseData.description = _descriptionController.text;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Case updated successfully (UI Only)')),
-    );
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Case Details'),
-        actions: [
-          IconButton(icon: const Icon(Icons.save), onPressed: _saveCase),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Case ID: ${widget.caseData.caseNumber}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.muted,
-                fontWeight: FontWeight.bold,
+    return StateListener<CaseController, CaseState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Case Details'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _initFields();
+                  });
+                },
               ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Case Title',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _clientController,
-              decoration: const InputDecoration(
-                labelText: 'Client Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: ['Pending', 'In Progress', 'Closed']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) setState(() => _status = value);
-                    },
+            ],
+          ),
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Case ID: ${widget.caseData.caseNo ?? 'N/A'}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _titleController,
+                        enabled: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Case Title',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Please enter case title'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _clientController,
+                        enabled: false,
+                        decoration: const InputDecoration(
+                          labelText: 'Client Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Please enter client name'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        enabled: false,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _selectDate(context),
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Hearing Date',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(DateFormat('MMM dd, yyyy').format(_hearingDate)),
-                          const Icon(Icons.calendar_today, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
               ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveCase,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.navy,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Save Changes'),
-            ),
-          ],
-        ),
-      ),
+              if (state.isLoading)
+                const Center(child: CircularProgressIndicator()),
+            ],
+          ),
+        );
+      },
     );
   }
 }

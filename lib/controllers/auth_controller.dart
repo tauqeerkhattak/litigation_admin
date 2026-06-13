@@ -1,8 +1,6 @@
-import 'package:control_room/control_room.dart';
-
-import '../api/models/login_response.dart';
 import '../injection.dart';
 import '../services/auth_service.dart';
+import 'base_controller.dart';
 
 class AuthState {
   final bool isLoading;
@@ -20,25 +18,17 @@ class AuthState {
   }
 }
 
-class AuthController extends StateController<AuthState> {
+class AuthController extends BaseController<AuthState> {
   AuthController() : super(AuthState());
 
-  Future<LoginResponse?> login(String email, String password) async {
-    update(state.copyWith(isLoading: true, error: null));
-
-    try {
+  Future<bool?> login(String email, String password) async {
+    return await safeAction(() async {
+      update(state.copyWith(isLoading: true, error: null));
       final response = await getIt<AuthService>().login(email, password);
-
-      if (response.status == 'success' || response.status == '200') {
-        update(state.copyWith(isLoading: false, isLoggedIn: true));
-      } else {
-        update(state.copyWith(isLoading: false, error: response.message));
-      }
-      return response;
-    } catch (e) {
-      update(state.copyWith(isLoading: false, error: e.toString()));
-      return null;
-    }
+      final success = response.status == 200;
+      update(state.copyWith(isLoading: false, isLoggedIn: success));
+      return success;
+    });
   }
 
   void update(AuthState newState) {
@@ -50,15 +40,18 @@ class AuthController extends StateController<AuthState> {
     update(AuthState());
   }
 
-  Future<void> forgotPassword(String uid) async {
-    update(state.copyWith(isLoading: true, error: null));
-
-    try {
+  Future<bool?> forgotPassword(String uid) async {
+    return await safeAction(() async {
+      update(state.copyWith(isLoading: true, error: null));
       await getIt<AuthService>().forgotPassword(uid);
       update(state.copyWith(isLoading: false));
-    } catch (e) {
-      update(state.copyWith(isLoading: false, error: e.toString()));
-      rethrow;
-    }
+      return true;
+    });
+  }
+
+  @override
+  void handleError(String message) {
+    update(state.copyWith(isLoading: false, error: message));
+    super.handleError(message);
   }
 }

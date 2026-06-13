@@ -15,7 +15,7 @@ class CaseListScreen extends StatefulWidget {
 
 class _CaseListScreenState extends State<CaseListScreen> {
   String _searchQuery = '';
-  String _selectedStatus = 'All';
+  CaseStatus? _selectedStatus;
 
   @override
   void initState() {
@@ -42,8 +42,7 @@ class _CaseListScreenState extends State<CaseListScreen> {
               );
 
           final matchesStatus =
-              _selectedStatus == 'All' ||
-              caseItem.status.toLowerCase() == _selectedStatus.toLowerCase();
+              _selectedStatus == null || caseItem.status == _selectedStatus;
 
           return matchesSearch && matchesStatus;
         }).toList();
@@ -76,22 +75,20 @@ class _CaseListScreenState extends State<CaseListScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    DropdownButton<String>(
+                    DropdownButton<CaseStatus?>(
                       value: _selectedStatus,
-                      items: ['All', 'Pending', 'In Progress', 'Closed']
+                      items: [null, ...CaseStatus.values]
                           .map(
                             (status) => DropdownMenuItem(
                               value: status,
-                              child: Text(status),
+                              child: Text(status?.displayName ?? 'All'),
                             ),
                           )
                           .toList(),
                       onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedStatus = value;
-                          });
-                        }
+                        setState(() {
+                          _selectedStatus = value;
+                        });
                       },
                     ),
                   ],
@@ -160,7 +157,7 @@ class _CaseListScreenState extends State<CaseListScreen> {
                                             ),
                                           ),
                                           child: Text(
-                                            caseItem.status,
+                                            caseItem.status.displayName,
                                             style: TextStyle(
                                               color: _getStatusColor(
                                                 caseItem.status,
@@ -231,17 +228,16 @@ class _CaseListScreenState extends State<CaseListScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
+  Color _getStatusColor(CaseStatus status) {
+    switch (status) {
+      case CaseStatus.active:
         return AppColors.gold;
-      case 'in progress':
-      case 'active':
+      case CaseStatus.stayGranted:
         return Colors.blue;
-      case 'closed':
+      case CaseStatus.decided:
         return AppColors.green;
-      default:
-        return AppColors.muted;
+      case CaseStatus.dismissed:
+        return Colors.red;
     }
   }
 }

@@ -11,20 +11,16 @@ class AuthService {
   AuthService(this._authApi, this._storage);
 
   Future<LoginResponse> login(String email, String password) async {
-    try {
-      final request = LoginRequest(email: email, password: password);
-      final response = await _authApi.login(request);
+    final request = LoginRequest(email: email, password: password);
+    final response = await _authApi.login(request);
 
-      if (response.status == 'success' || response.status == '200') {
-        if (response.token != null) {
-          await _storage.setAccessToken(response.token);
-        }
+    if (response.status == 200) {
+      if (response.data != null) {
+        await _storage.setAccessToken(response.data);
       }
-
-      return response;
-    } catch (e) {
-      rethrow;
     }
+
+    return response;
   }
 
   Future<void> logout() async {

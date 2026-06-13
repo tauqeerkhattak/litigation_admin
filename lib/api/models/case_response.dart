@@ -1,11 +1,13 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../utils/constants.dart';
+
 part 'case_response.g.dart';
 
 @JsonSerializable()
 class CaseDocument {
   final String id;
-  final String type;
+  final DocumentType type;
   final String? name;
   final String? url;
   final String? uploadedAt;
@@ -54,19 +56,19 @@ class CaseDataResponse {
   final String? userId;
   final String? caseNo;
   final int? year;
-  final String? court;
-  final String? bench;
+  final Court? court;
+  final Bench? bench;
   final String title;
   final List<String> plaintiffs;
   final List<String> respondents;
   final String? firstHearing;
   final String? lastHearing;
   final String? nextHearing;
-  final String status;
+  final CaseStatus status;
   final String notes;
-  final String? caseNature;
-  final String? department;
-  final String? taluka;
+  final CaseNature? caseNature;
+  final Department? department;
+  final Taluka? taluka;
   final List<CaseDocument> documents;
   final List<CaseHearing> hearings;
 
@@ -80,19 +82,19 @@ class CaseDataResponse {
     String? userId,
     String? caseNo,
     int? year,
-    String? court,
-    String? bench,
+    Court? court,
+    Bench? bench,
     String? title,
     List<String>? plaintiffs,
     List<String>? respondents,
     String? firstHearing,
     String? lastHearing,
     String? nextHearing,
-    String? status,
+    CaseStatus? status,
     String? notes,
-    String? caseNature,
-    String? department,
-    String? taluka,
+    CaseNature? caseNature,
+    Department? department,
+    Taluka? taluka,
     List<CaseDocument>? documents,
     List<CaseHearing>? hearings,
   }) {

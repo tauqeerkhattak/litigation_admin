@@ -20,32 +20,39 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      final authController = ControlRoom.get<AuthController>(context);
-      final response = await authController.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    final authController = ControlRoom.get<AuthController>(context);
+    final success = await authController.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (success ?? false) {
       if (mounted) {
-        if (response != null &&
-            (response.status == 'success' || response.status == '200')) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(response.message)));
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
-          );
-        } else {
-          final error = ControlRoom.get<AuthController>(context).state.error;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error ?? 'Login failed'),
-              backgroundColor: AppColors.red,
-            ),
-          );
-        }
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
       }
+
+      // if (mounted) {
+      //   if (response?.status == 200) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(content: Text(response?.message ?? 'Success')),
+      //     );
+      //     Navigator.of(context).pushReplacement(
+      //       MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      //     );
+      //   } else {
+      //     final error = ControlRoom.get<AuthController>(context).state.error;
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(
+      //         content: Text(error ?? 'Login failed'),
+      //         backgroundColor: AppColors.red,
+      //       ),
+      //     );
+      //   }
+      // }
     }
   }
 

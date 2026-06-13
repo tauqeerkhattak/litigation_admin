@@ -22,3 +22,190 @@ enum UserRole {
   documentor, // Cannot create cases and hearings, can only add documents
   viewer, // Only view cases, hearings, and documents
 }
+
+enum Court {
+  highCourt,
+  civilCourt,
+  sessionsCourt,
+  antiCorruptionCourt,
+  serviceTribunal,
+  federalShariatCourt,
+  supremeCourt,
+  other,
+}
+
+extension CourtExtension on Court {
+  String get displayName {
+    switch (this) {
+      case Court.highCourt:
+        return "High Court";
+      case Court.civilCourt:
+        return "Civil Court";
+      case Court.sessionsCourt:
+        return "Sessions Court";
+      case Court.antiCorruptionCourt:
+        return "Anti-Corruption Court";
+      case Court.serviceTribunal:
+        return "Service Tribunal";
+      case Court.federalShariatCourt:
+        return "Federal Shariat Court";
+      case Court.supremeCourt:
+        return "Supreme Court";
+      case Court.other:
+        return "Other";
+    }
+  }
+}
+
+enum Bench { singleBench, divisionBench, fullBench }
+
+extension BenchExtension on Bench {
+  String get displayName {
+    switch (this) {
+      case Bench.singleBench:
+        return "Single Bench";
+      case Bench.divisionBench:
+        return "Division Bench";
+      case Bench.fullBench:
+        return "Full Bench";
+    }
+  }
+}
+
+enum CaseNature {
+  revenue,
+  generalRecruitment,
+  disabledQuota,
+  generalAdministration,
+  serviceMatter,
+  contemptCase,
+  other,
+}
+
+extension CaseNatureExtension on CaseNature {
+  String get displayName {
+    switch (this) {
+      case CaseNature.revenue:
+        return "Revenue";
+      case CaseNature.generalRecruitment:
+        return "General Recruitment";
+      case CaseNature.disabledQuota:
+        return "Disabled Quota";
+      case CaseNature.generalAdministration:
+        return "General Administration";
+      case CaseNature.serviceMatter:
+        return "Service Matter";
+      case CaseNature.contemptCase:
+        return "Contempt Case";
+      case CaseNature.other:
+        return "Other";
+    }
+  }
+}
+
+enum Taluka { sukkurCity, newSukkur, rohri, panoAqil, salehPat }
+
+extension TalukaExtension on Taluka {
+  String get displayName {
+    switch (this) {
+      case Taluka.sukkurCity:
+        return "Sukkur City";
+      case Taluka.newSukkur:
+        return "New Sukkur";
+      case Taluka.rohri:
+        return "Rohri";
+      case Taluka.panoAqil:
+        return "Pano Aqil";
+      case Taluka.salehPat:
+        return "Saleh Pat";
+    }
+  }
+}
+
+enum Department {
+  educationLiteracy,
+  health,
+  irrigation,
+  agriculture,
+  revenue,
+  policeHome,
+  localGovernment,
+  worksServices,
+  socialWelfare,
+  other,
+}
+
+extension DepartmentExtension on Department {
+  String get displayName {
+    switch (this) {
+      case Department.educationLiteracy:
+        return "Education & Literacy";
+      case Department.health:
+        return "Health";
+      case Department.irrigation:
+        return "Irrigation";
+      case Department.agriculture:
+        return "Agriculture";
+      case Department.revenue:
+        return "Revenue";
+      case Department.policeHome:
+        return "Police / Home";
+      case Department.localGovernment:
+        return "Local Government";
+      case Department.worksServices:
+        return "Works & Services";
+      case Department.socialWelfare:
+        return "Social Welfare";
+      case Department.other:
+        return "Other";
+    }
+  }
+}
+
+enum CaseStatus { active, stayGranted, decided, dismissed }
+
+extension CaseStatusExtension on CaseStatus {
+  String get displayName {
+    switch (this) {
+      case CaseStatus.active:
+        return "Active";
+      case CaseStatus.stayGranted:
+        return "Stay Granted";
+      case CaseStatus.decided:
+        return "Decided";
+      case CaseStatus.dismissed:
+        return "Dismissed";
+    }
+  }
+}
+
+enum DocumentType {
+  plaint,
+  parawiseComments,
+  writtenStatement,
+  complianceReport,
+  orderSheet,
+  judgement,
+  other,
+}
+
+extension DocumentTypeExtension on DocumentType {
+  String get displayName {
+    switch (this) {
+      case DocumentType.plaint:
+        return "Plaint";
+      case DocumentType.parawiseComments:
+        return "Parawise Comments";
+      case DocumentType.writtenStatement:
+        return "Written Statement";
+      case DocumentType.complianceReport:
+        return "Compliance Report";
+      case DocumentType.orderSheet:
+        return "Order Sheet";
+      case DocumentType.judgement:
+        return "Judgement";
+      case DocumentType.other:
+        return "Other";
+    }
+  }
+}

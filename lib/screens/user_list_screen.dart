@@ -131,6 +131,22 @@ class _UserListScreenState extends State<UserListScreen> {
     );
   }
 
+  void _sendPasswordResetLink(String uid) async {
+    final success = await ControlRoom.get<AuthController>(
+      context,
+    ).forgotPassword(uid);
+    if (success ?? false) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent'),
+            backgroundColor: AppColors.navy,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _userRoleNotifier.dispose();
@@ -221,36 +237,8 @@ class _UserListScreenState extends State<UserListScreen> {
                                   children: [
                                     IconButton(
                                       icon: const Icon(Icons.vpn_key_outlined),
-                                      onPressed: () async {
-                                        try {
-                                          await ControlRoom.get<AuthController>(
-                                            context,
-                                          ).forgotPassword(user.uid);
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Password reset email sent',
-                                                ),
-                                                backgroundColor: AppColors.navy,
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text('Error: $e'),
-                                                backgroundColor: AppColors.red,
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
+                                      onPressed: () =>
+                                          _sendPasswordResetLink(user.uid),
                                       tooltip: 'Send Password Reset',
                                       color: AppColors.muted,
                                     ),

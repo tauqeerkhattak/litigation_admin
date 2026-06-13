@@ -31,6 +31,8 @@ void main() async {
   );
 }
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 class LitigationAdminApp extends StatelessWidget {
   final bool isLoggedIn;
 
@@ -39,6 +41,7 @@ class LitigationAdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Litigation Admin',
       debugShowCheckedModeBanner: false,
       theme: lightTheme,

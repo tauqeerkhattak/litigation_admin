@@ -19,6 +19,7 @@ void setupLocator() {
     ..options = BaseOptions(
       baseUrl:
           "https://litigation-backend-74427736097.us-central1.run.app/api/v1/",
+      validateStatus: (_) => true,
     );
   const secureStorage = FlutterSecureStorage();
   final storageService = StorageService(secureStorage);

@@ -14,6 +14,6 @@ abstract class AuthApi {
   @POST("admin/login")
   Future<LoginResponse> login(@Body() LoginRequest request);
 
-  @POST("users/{uid}/forgot-password")
+  @POST("/admin/users/{uid}/forgot-password")
   Future<GenericResponse> forgotPassword(@Path("uid") String uid);
 }

@@ -1,5 +1,6 @@
 import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
+import 'package:litigation_admin/utils/string_utils.dart';
 
 import '../api/models/user_response.dart';
 import '../controllers/user_controller.dart';
@@ -18,9 +19,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late UserRole _role;
+  late TextEditingController _phoneController;
+  late TextEditingController _roleController;
   late bool _isEnabled;
-  bool _isEditing = false;
 
   @override
   void initState() {
@@ -31,7 +32,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   void _initFields() {
     _nameController = TextEditingController(text: widget.user.name);
     _emailController = TextEditingController(text: widget.user.email);
-    _role = widget.user.role;
+    _phoneController = TextEditingController(
+      text: '${widget.user.countryCode}${widget.user.phoneNumber}',
+    );
+    _roleController = TextEditingController(
+      text: widget.user.role.name.capitalize,
+    );
     _isEnabled = !widget.user.disabled;
   }
 
@@ -42,97 +48,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     super.dispose();
   }
 
-  void _resetPassword() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Password reset link sent to ${widget.user.email}'),
-        backgroundColor: AppColors.navy,
-      ),
-    );
-  }
-
-  void _toggleUserStatus() async {
-    try {
-      await ControlRoom.get<UserController>(
-        context,
-      ).disableUser(widget.user.uid);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'User ${_isEnabled ? 'disabled' : 'enabled'} successfully',
-            ),
-          ),
-        );
-        setState(() {
-          _isEnabled = !_isEnabled;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Action failed: $e')));
-      }
-    }
-  }
-
-  void _saveUser() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final userData = {
-      'name': _nameController.text,
-      'email': _emailController.text,
-      'role': _role.name,
-      'disabled': !_isEnabled,
-    };
-
-    try {
-      await ControlRoom.get<UserController>(
-        context,
-      ).updateUser(widget.user.uid, userData);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User updated successfully')),
-        );
-        setState(() {
-          _isEditing = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update user: $e')));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return StateListener<UserController, UserState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('User Profile'),
-            actions: [
-              if (!_isEditing)
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => setState(() => _isEditing = true),
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    setState(() {
-                      _isEditing = false;
-                      _initFields();
-                    });
-                  },
-                ),
-            ],
-          ),
+          appBar: AppBar(title: const Text('User Profile')),
           body: Stack(
             children: [
               SingleChildScrollView(
@@ -156,23 +77,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               ),
                             ),
                           ),
-                          if (_isEditing)
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: AppColors.gold,
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.camera_alt,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {},
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
@@ -183,7 +87,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         children: [
                           TextFormField(
                             controller: _nameController,
-                            enabled: _isEditing,
+                            readOnly: true,
                             decoration: const InputDecoration(
                               labelText: 'Full Name',
                               border: OutlineInputBorder(),
@@ -199,94 +103,51 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _emailController,
-                            enabled: _isEditing,
+                            readOnly: true,
                             decoration: const InputDecoration(
                               labelText: 'Email Address',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.email),
                             ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter an email';
-                              }
-                              if (!RegExp(
-                                r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
                           ),
                           const SizedBox(height: 16),
-                          DropdownButtonFormField<UserRole>(
-                            value: _role,
-                            onChanged: _isEditing
-                                ? (value) {
-                                    if (value != null) {
-                                      setState(() => _role = value);
-                                    }
-                                  }
-                                : null,
+                          TextFormField(
+                            controller: _phoneController,
+                            readOnly: true,
                             decoration: const InputDecoration(
-                              labelText: 'Role',
+                              labelText: 'Phone Number',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.phone),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _roleController,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              labelText: 'User Role',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.badge),
                             ),
-                            items: UserRole.values
-                                .map(
-                                  (role) => DropdownMenuItem(
-                                    value: role,
-                                    child: Text(
-                                      role.name[0].toUpperCase() +
-                                          role.name.substring(1),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            initialValue: _isEnabled ? 'Enabled' : 'Disabled',
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Status',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.lock),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    if (_isEditing)
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _resetPassword,
-                          icon: const Icon(Icons.lock_reset),
-                          label: const Text('Reset Password'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.red,
-                            side: const BorderSide(color: AppColors.red),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 32),
-                    if (_isEditing)
-                      ElevatedButton(
-                        onPressed: state.isLoading ? null : _saveUser,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        child: state.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Save Changes'),
-                      ),
                   ],
                 ),
               ),
-              if (state.isLoading && !_isEditing)
+              if (state.isLoading)
                 const Center(child: CircularProgressIndicator()),
             ],
           ),

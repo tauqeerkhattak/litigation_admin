@@ -57,7 +57,7 @@ class _AuthApi implements AuthApi {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            'users/${uid}/forgot-password',
+            '/admin/users/${uid}/forgot-password',
             queryParameters: queryParameters,
             data: _data,
           )

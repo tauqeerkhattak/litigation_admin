@@ -141,11 +141,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 MaterialPageRoute(
                   builder: (context) => CaseDetailScreen(caseData: caseItem),
                 ),
-              ).then((_) {
-                if (mounted) {
-                  ControlRoom.get<CaseController>(context).fetchCases();
-                }
-              });
+              );
             },
             title: Text(
               caseItem.title,

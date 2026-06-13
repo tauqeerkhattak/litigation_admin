@@ -1,7 +1,8 @@
-import 'package:control_room/control_room.dart';
+import 'package:litigation_admin/controllers/base_controller.dart';
 
 import '../api/models/user_response.dart';
 import '../injection.dart';
+import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
 class UserState {
@@ -20,7 +21,7 @@ class UserState {
   }
 }
 
-class UserController extends StateController<UserState> {
+class UserController extends BaseController<UserState> {
   UserController() : super(UserState());
 
   Future<void> fetchUsers() async {
@@ -55,8 +56,8 @@ class UserController extends StateController<UserState> {
   }
 
   Future<void> disableUser(String uid) async {
-    update(state.copyWith(isLoading: true));
     try {
+      update(state.copyWith(isLoading: true));
       await getIt<UserService>().disableUser(uid);
       await fetchUsers();
     } catch (e) {
@@ -64,7 +65,22 @@ class UserController extends StateController<UserState> {
     }
   }
 
+  Future<bool?> forgotPassword(String uid) async {
+    return await safeAction(() async {
+      update(state.copyWith(isLoading: true, error: null));
+      await getIt<AuthService>().forgotPassword(uid);
+      update(state.copyWith(isLoading: false));
+      return true;
+    });
+  }
+
   void update(UserState newState) {
     state = newState;
+  }
+
+  @override
+  void handleError(String message) {
+    update(state.copyWith(isLoading: false, error: message));
+    super.handleError(message);
   }
 }

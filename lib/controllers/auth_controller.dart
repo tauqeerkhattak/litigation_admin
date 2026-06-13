@@ -40,15 +40,6 @@ class AuthController extends BaseController<AuthState> {
     update(AuthState());
   }
 
-  Future<bool?> forgotPassword(String uid) async {
-    return await safeAction(() async {
-      update(state.copyWith(isLoading: true, error: null));
-      await getIt<AuthService>().forgotPassword(uid);
-      update(state.copyWith(isLoading: false));
-      return true;
-    });
-  }
-
   @override
   void handleError(String message) {
     update(state.copyWith(isLoading: false, error: message));

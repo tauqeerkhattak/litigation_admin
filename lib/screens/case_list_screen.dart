@@ -27,29 +27,29 @@ class _CaseListScreenState extends State<CaseListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StateListener<CaseController, CaseState>(
-      builder: (context, state) {
-        final filteredCases = state.cases.where((caseItem) {
-          final matchesSearch =
-              caseItem.title.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ||
-              (caseItem.caseNo?.toLowerCase() ?? '').contains(
-                _searchQuery.toLowerCase(),
-              ) ||
-              caseItem.plaintiffs.any(
-                (p) => p.toLowerCase().contains(_searchQuery.toLowerCase()),
-              );
+    return Scaffold(
+      appBar: AppBar(title: const Text('All Cases')),
+      body: StateListener<CaseController, CaseState>(
+        builder: (context, state) {
+          final filteredCases = state.cases.where((caseItem) {
+            final matchesSearch =
+                caseItem.title.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+                (caseItem.caseNo?.toLowerCase() ?? '').contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+                caseItem.plaintiffs.any(
+                  (p) => p.toLowerCase().contains(_searchQuery.toLowerCase()),
+                );
 
-          final matchesStatus =
-              _selectedStatus == null || caseItem.status == _selectedStatus;
+            final matchesStatus =
+                _selectedStatus == null || caseItem.status == _selectedStatus;
 
-          return matchesSearch && matchesStatus;
-        }).toList();
+            return matchesSearch && matchesStatus;
+          }).toList();
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('All Cases')),
-          body: Column(
+          return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -117,10 +117,6 @@ class _CaseListScreenState extends State<CaseListScreen> {
                                   builder: (context) =>
                                       CaseDetailScreen(caseData: caseItem),
                                 ),
-                              ).then(
-                                (_) => ControlRoom.get<CaseController>(
-                                  context,
-                                ).fetchCases(),
                               );
                             },
                             child: Card(
@@ -212,19 +208,9 @@ class _CaseListScreenState extends State<CaseListScreen> {
                       ),
               ),
             ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Add Case functionality (Coming Soon)'),
-                ),
-              );
-            },
-            child: const Icon(Icons.add),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

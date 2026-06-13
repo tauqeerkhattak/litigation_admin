@@ -1,10 +1,9 @@
 import 'package:control_room/control_room.dart';
 import 'package:flutter/material.dart';
 
-import '../controllers/auth_controller.dart';
 import '../controllers/user_controller.dart';
 import '../utils/constants.dart';
-import '../utils/string_utils.dart';
+import 'user_creation_form.dart';
 import 'user_detail_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -16,11 +15,6 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen> {
   String _searchQuery = '';
-  final _userRoleNotifier = ValueNotifier<UserRole?>(null);
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final phoneController = TextEditingController();
 
   @override
   void initState() {
@@ -34,105 +28,13 @@ class _UserListScreenState extends State<UserListScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Add New User'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone Number'),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<UserRole>(
-                  items: UserRole.values
-                      .map(
-                        (role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(role.name.capitalize),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    _userRoleNotifier.value = value;
-                  },
-                  decoration: const InputDecoration(labelText: 'Role'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty &&
-                    emailController.text.isNotEmpty &&
-                    passwordController.text.isNotEmpty) {
-                  final userController = ControlRoom.get<UserController>(
-                    context,
-                  );
-                  Navigator.pop(context);
-
-                  await userController.createUser({
-                    'email': emailController.text.trim(),
-                    'password': passwordController.text,
-                    'name': nameController.text.trim(),
-                    'role': _userRoleNotifier.value,
-                    'country_code': '+92',
-                    'phone_number': phoneController.text.trim(),
-                  });
-
-                  if (context.mounted) {
-                    if (userController.state.error != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(userController.state.error!),
-                          backgroundColor: AppColors.red,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('User created successfully'),
-                          backgroundColor: AppColors.green,
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
+        return UserCreationForm();
       },
     );
   }
 
   void _sendPasswordResetLink(String uid) async {
-    final success = await ControlRoom.get<AuthController>(
+    final success = await ControlRoom.get<UserController>(
       context,
     ).forgotPassword(uid);
     if (success ?? false) {
@@ -145,16 +47,6 @@ class _UserListScreenState extends State<UserListScreen> {
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _userRoleNotifier.dispose();
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    phoneController.dispose();
-    super.dispose();
   }
 
   @override
@@ -189,7 +81,7 @@ class _UserListScreenState extends State<UserListScreen> {
                 ),
               ),
               Expanded(
-                child: state.isLoading && state.users.isEmpty
+                child: state.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : filteredUsers.isEmpty
                     ? const Center(child: Text('No users found.'))
@@ -237,17 +129,24 @@ class _UserListScreenState extends State<UserListScreen> {
                                   children: [
                                     IconButton(
                                       icon: const Icon(Icons.vpn_key_outlined),
-                                      onPressed: () =>
-                                          _sendPasswordResetLink(user.uid),
+                                      onPressed: user.disabled
+                                          ? null
+                                          : () => _sendPasswordResetLink(
+                                              user.uid,
+                                            ),
                                       tooltip: 'Send Password Reset',
                                       color: AppColors.muted,
                                     ),
                                     Switch(
                                       value: !user.disabled,
-                                      onChanged: (value) =>
-                                          ControlRoom.get<UserController>(
-                                            context,
-                                          ).disableUser(user.uid),
+                                      onChanged: (value) {
+                                        if (user.disabled) {
+                                          return;
+                                        }
+                                        ControlRoom.get<UserController>(
+                                          context,
+                                        ).disableUser(user.uid);
+                                      },
                                       activeThumbColor: AppColors.green,
                                     ),
                                   ],

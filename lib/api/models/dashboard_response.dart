@@ -4,13 +4,9 @@ part 'dashboard_response.g.dart';
 
 @JsonSerializable()
 class DashboardData {
-  @JsonKey(name: 'active_cases')
   final int activeCases;
-  @JsonKey(name: 'hearings_today')
   final int hearingsToday;
-  @JsonKey(name: 'total_users')
   final int totalUsers;
-  @JsonKey(name: 'urgent_tasks')
   final int urgentTasks;
 
   DashboardData({

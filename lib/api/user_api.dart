@@ -5,18 +5,16 @@ import 'models/user_response.dart';
 
 part 'user_api.g.dart';
 
-@RestApi(
-  baseUrl: "https://litigation-backend-74427736097.us-central1.run.app/api/v1/",
-)
+@RestApi()
 abstract class UserApi {
   factory UserApi(Dio dio, {String baseUrl}) = _UserApi;
 
-  @GET("users")
+  @GET("/admin/users")
   Future<UserListResponse> getUsers();
 
-  @POST("users/create")
+  @POST("/admin/users/create")
   Future<UserSingleResponse> createUser(@Body() Map<String, dynamic> request);
 
-  @DELETE("users/{uid}")
+  @DELETE("/admin/users/{uid}")
   Future<UserSingleResponse> disableUser(@Path("uid") String uid);
 }

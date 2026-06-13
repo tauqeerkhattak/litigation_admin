@@ -1,6 +1,7 @@
 import 'package:control_room/control_room.dart';
 
 import '../api/models/dashboard_response.dart';
+import '../injection.dart';
 import '../services/dashboard_service.dart';
 
 class DashboardState {
@@ -24,15 +25,13 @@ class DashboardState {
 }
 
 class DashboardController extends StateController<DashboardState> {
-  final DashboardService _dashboardService;
-
-  DashboardController(this._dashboardService) : super(DashboardState());
+  DashboardController() : super(DashboardState());
 
   Future<void> fetchDashboardData() async {
     update(state.copyWith(isLoading: true, error: null));
 
     try {
-      final response = await _dashboardService.getDashboard();
+      final response = await getIt<DashboardService>().getDashboard();
       update(state.copyWith(isLoading: false, data: response.data));
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));

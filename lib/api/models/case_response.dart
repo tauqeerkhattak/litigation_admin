@@ -8,7 +8,6 @@ class CaseDocument {
   final String type;
   final String name;
   final String url;
-  @JsonKey(name: 'uploaded_at')
   final String uploadedAt;
 
   CaseDocument({
@@ -54,9 +53,7 @@ class CaseHearing {
 @JsonSerializable()
 class CaseDataResponse {
   final String id;
-  @JsonKey(name: 'user_id')
   final String userId;
-  @JsonKey(name: 'case_no')
   final String caseNo;
   final int year;
   final String court;
@@ -64,15 +61,11 @@ class CaseDataResponse {
   final String title;
   final List<String> plaintiffs;
   final List<String> respondents;
-  @JsonKey(name: 'first_hearing')
   final String? firstHearing;
-  @JsonKey(name: 'last_hearing')
   final String? lastHearing;
-  @JsonKey(name: 'next_hearing')
   final String? nextHearing;
   final String status;
   final String notes;
-  @JsonKey(name: 'case_nature')
   final String? caseNature;
   final String? department;
   final String? taluka;

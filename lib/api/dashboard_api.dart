@@ -5,12 +5,10 @@ import 'models/dashboard_response.dart';
 
 part 'dashboard_api.g.dart';
 
-@RestApi(
-  baseUrl: "https://litigation-backend-74427736097.us-central1.run.app/api/v1/",
-)
+@RestApi()
 abstract class DashboardApi {
   factory DashboardApi(Dio dio, {String baseUrl}) = _DashboardApi;
 
-  @GET("dashboard")
+  @GET("/admin/dashboard")
   Future<DashboardResponse> getDashboard();
 }

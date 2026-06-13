@@ -1,6 +1,7 @@
 import 'package:control_room/control_room.dart';
 
 import '../api/models/user_response.dart';
+import '../injection.dart';
 import '../services/user_service.dart';
 
 class UserState {
@@ -24,15 +25,13 @@ class UserState {
 }
 
 class UserController extends StateController<UserState> {
-  final UserService _userService;
-
-  UserController(this._userService) : super(UserState());
+  UserController() : super(UserState());
 
   Future<void> fetchUsers() async {
     update(state.copyWith(isLoading: true, error: null));
 
     try {
-      final response = await _userService.getUsers();
+      final response = await getIt<UserService>().getUsers();
       update(state.copyWith(isLoading: false, users: response.data));
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));
@@ -42,7 +41,7 @@ class UserController extends StateController<UserState> {
   Future<void> createUser(Map<String, dynamic> userData) async {
     update(state.copyWith(isLoading: true));
     try {
-      await _userService.createUser(userData);
+      await getIt<UserService>().createUser(userData);
       await fetchUsers();
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));
@@ -52,7 +51,7 @@ class UserController extends StateController<UserState> {
   Future<void> disableUser(String uid) async {
     update(state.copyWith(isLoading: true));
     try {
-      await _userService.disableUser(uid);
+      await getIt<UserService>().disableUser(uid);
       await fetchUsers();
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));

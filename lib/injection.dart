@@ -6,10 +6,6 @@ import 'api/auth_api.dart';
 import 'api/case_api.dart';
 import 'api/dashboard_api.dart';
 import 'api/user_api.dart';
-import 'controllers/auth_controller.dart';
-import 'controllers/case_controller.dart';
-import 'controllers/dashboard_controller.dart';
-import 'controllers/user_controller.dart';
 import 'services/auth_service.dart';
 import 'services/case_service.dart';
 import 'services/dashboard_service.dart';
@@ -19,7 +15,11 @@ import 'services/user_service.dart';
 final getIt = GetIt.instance;
 
 void setupLocator() {
-  final dio = Dio();
+  final dio = Dio()
+    ..options = BaseOptions(
+      baseUrl:
+          "https://litigation-backend-74427736097.us-central1.run.app/api/v1/",
+    );
   const secureStorage = FlutterSecureStorage();
   final storageService = StorageService(secureStorage);
 
@@ -49,19 +49,5 @@ void setupLocator() {
   getIt.registerLazySingleton<CaseService>(() => CaseService(getIt<CaseApi>()));
   getIt.registerLazySingleton<DashboardService>(
     () => DashboardService(getIt<DashboardApi>()),
-  );
-
-  // Controllers
-  getIt.registerLazySingleton<AuthController>(
-    () => AuthController(getIt<AuthService>()),
-  );
-  getIt.registerLazySingleton<DashboardController>(
-    () => DashboardController(getIt<DashboardService>()),
-  );
-  getIt.registerLazySingleton<UserController>(
-    () => UserController(getIt<UserService>()),
-  );
-  getIt.registerLazySingleton<CaseController>(
-    () => CaseController(getIt<CaseService>()),
   );
 }

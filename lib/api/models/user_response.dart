@@ -7,15 +7,11 @@ class UserDataResponse {
   final String uid;
   final String email;
   final String name;
-  @JsonKey(name: 'country_code')
   final String countryCode;
-  @JsonKey(name: 'phone_number')
   final String phoneNumber;
   final String role;
   final bool disabled;
-  @JsonKey(name: 'created_at')
   final String createdAt;
-  @JsonKey(name: 'updated_at')
   final String updatedAt;
 
   UserDataResponse({

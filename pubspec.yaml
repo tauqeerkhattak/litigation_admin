@@ -41,8 +41,8 @@ dependencies:
   retrofit: ^4.9.2
   json_annotation: ^4.12.0
   get_it: ^9.2.1
-  flutter_secure_storage: ^9.2.4
-  control_room: ^1.1.0
+  flutter_secure_storage: ^10.3.1
+  control_room: ^1.2.0
 
 dev_dependencies:
   flutter_test:

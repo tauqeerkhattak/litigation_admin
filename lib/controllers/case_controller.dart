@@ -1,4 +1,6 @@
 import 'package:control_room/control_room.dart';
+import 'package:flutter/material.dart';
+import 'package:litigation_admin/injection.dart';
 
 import '../api/models/case_response.dart';
 import '../services/case_service.dart';
@@ -24,15 +26,13 @@ class CaseState {
 }
 
 class CaseController extends StateController<CaseState> {
-  final CaseService _caseService;
-
-  CaseController(this._caseService) : super(CaseState());
+  CaseController() : super(CaseState());
 
   Future<void> fetchCases() async {
     update(state.copyWith(isLoading: true, error: null));
 
     try {
-      final response = await _caseService.getCases();
+      final response = await getIt<CaseService>().getCases();
       update(state.copyWith(isLoading: false, cases: response.data));
     } catch (e) {
       update(state.copyWith(isLoading: false, error: e.toString()));
@@ -40,6 +40,8 @@ class CaseController extends StateController<CaseState> {
   }
 
   void update(CaseState newState) {
-    state = newState;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      state = newState;
+    });
   }
 }

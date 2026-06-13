@@ -21,10 +21,10 @@ void main() async {
   runApp(
     ControlRoom(
       controllers: {
-        AuthController: () => getIt<AuthController>(),
-        DashboardController: () => getIt<DashboardController>(),
-        UserController: () => getIt<UserController>(),
-        CaseController: () => getIt<CaseController>(),
+        AuthController: () => AuthController(),
+        DashboardController: () => DashboardController(),
+        UserController: () => UserController(),
+        CaseController: () => CaseController(),
       },
       child: LitigationAdminApp(isLoggedIn: isLoggedIn),
     ),
